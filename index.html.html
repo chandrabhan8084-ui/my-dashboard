@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="hi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Launchpad - Custom URL Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+        .dark .glass {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+        .shortcut-card:hover .action-btns {
+            opacity: 1;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-300">
+
+    <!-- Navigation Header -->
+    <header class="sticky top-0 z-40 glass border-b border-slate-200/80 dark:border-slate-800/80 px-4 lg:px-8 py-3 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            
+            <!-- Logo & Brand -->
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                    <i class="fa-solid fa-compass text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-none bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">DashPulse</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Custom URL Dashboard</p>
+                </div>
+            </div>
+
+            <!-- Header Action Controls -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <!-- Live Clock -->
+                <div id="clock" class="hidden md:block text-xs font-semibold tracking-wide text-slate-600 dark:text-slate-300 bg-slate-200/50 dark:bg-slate-800/80 px-3 py-2 rounded-xl border border-slate-300/50 dark:border-slate-700/50">
+                    00:00:00 AM
+                </div>
+
+                <!-- Export Backup -->
+                <button onclick="exportBackup()" title="Backup File Download Karein" class="flex items-center space-x-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl text-xs font-semibold transition-all">
+                    <i class="fa-solid fa-download text-blue-500"></i>
+                    <span class="hidden sm:inline">Export Backup</span>
+                </button>
+
+                <!-- Import Backup -->
+                <label title="Puraana Backup Restore Karein" class="flex items-center space-x-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all">
+                    <i class="fa-solid fa-upload text-emerald-500"></i>
+                    <span class="hidden sm:inline">Import Backup</span>
+                    <input type="file" id="importFileInput" accept=".json" onchange="importBackup(event)" class="hidden" />
+                </label>
+                
+                <!-- Add New Link Button -->
+                <button onclick="openAddModal()" class="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shadow-md shadow-blue-500/20 active:scale-95">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add Link</span>
+                </button>
+
+                <!-- Dark/Light Theme Toggle -->
+                <button id="themeToggle" title="Theme Badlein" class="p-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
+                    <i class="fa-solid fa-moon dark:hidden text-base"></i>
+                    <i class="fa-solid fa-sun hidden dark:inline text-base text-amber-400"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Browser Data Safety Notice Banner -->
+    <div id="noticeBanner" class="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2.5 text-xs text-amber-800 dark:text-amber-300">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-triangle-exclamation text-amber-500 text-sm"></i>
+                <span><strong>Aapka Sawal (Chrome History Delete Ho Jaane Par Data Delete Hoga?):</strong> Haan, agar aap Chrome ki "Site Data" ya "Cookies" clear karte hain toh LocalStorage delete ho sakta hai. Isse bachne ke liye <strong>'Export Backup'</strong> button daba kar file ko apne phone/computer me safe save kar lein. Chrome history delete hone par aap <strong>'Import Backup'</strong> se ek second me saare buttons wapas la sakte hain!</span>
+            </div>
+            <button onclick="dismissBanner()" class="text-amber-600 dark:text-amber-400 hover:opacity-80 p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Body -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 lg:px-8 py-8 space-y-8">
+        
+        <!-- Search Engine Section -->
+        <section class="max-w-3xl mx-auto w-full space-y-4 text-center">
+            <h2 id="greeting" class="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100">
+                Welcome Back! 👋
+            </h2>
+            
+            <!-- Multi-Engine Search Form -->
+            <form id="searchForm" onsubmit="handleSearch(event)" class="relative flex items-center">
+                <div class="relative w-full shadow-lg rounded-2xl overflow-hidden flex bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+                    
+                    <!-- Engine Dropdown -->
+                    <div class="relative flex items-center border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                        <select id="searchEngine" onchange="updateSearchIcon()" class="appearance-none bg-transparent py-3 pl-4 pr-8 text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer">
+                            <option value="google">Google</option>
+                            <option value="youtube">YouTube</option>
+                            <option value="bing">Bing</option>
+                            <option value="duckduckgo">DuckDuckGo</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down text-xs text-slate-400 absolute right-3 pointer-events-none"></i>
+                    </div>
+
+                    <!-- Input Box -->
+                    <div class="relative flex-grow flex items-center pl-3">
+                        <i id="searchEngineIcon" class="fa-brands fa-google text-slate-400 mr-2 text-base"></i>
+                        <input type="text" id="searchInput" placeholder="Web search karein ya direct URL enter karein..." class="w-full py-3.5 pr-10 text-sm text-slate-800 dark:text-slate-100 bg-transparent focus:outline-none placeholder-slate-400" autocomplete="off" />
+                    </div>
+
+                    <!-- Search Submit Button -->
+                    <button type="submit" class="px-5 bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center justify-center">
+                        <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Category Tabs Bar -->
+        <section class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 overflow-x-auto no-scrollbar gap-4">
+            <div class="flex items-center space-x-2" id="categoryTabs">
+                <!-- Dynamically generated category tabs -->
+            </div>
+            
+            <button onclick="resetToDefaults()" class="text-xs font-semibold text-slate-400 hover:text-red-500 transition-colors whitespace-nowrap">
+                <i class="fa-solid fa-rotate-right mr-1"></i> Reset Defaults
+            </button>
+        </section>
+
+        <!-- Shortcuts Grid Container -->
+        <section id="shortcutsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <!-- Dynamic URL buttons populated by JS -->
+        </section>
+
+    </main>
+
+    <!-- Add/Edit URL Modal -->
+    <div id="shortcutModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200 px-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl transform scale-95 transition-transform duration-200">
+            <div class="flex justify-between items-center mb-5">
+                <h3 id="modalTitle" class="text-lg font-bold text-slate-800 dark:text-slate-100">Naya Shortcut Button Jodein</h3>
+                <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="shortcutForm" onsubmit="saveShortcut(event)" class="space-y-4">
+                <input type="hidden" id="shortcutId" />
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">BUTTON TITLE *</label>
+                    <input type="text" id="shortcutTitle" required placeholder="e.g. WhatsApp, Amazon, Facebook" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-100" />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">WEBSITE URL *</label>
+                    <input type="url" id="shortcutUrl" required placeholder="https://web.whatsapp.com" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-100" />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">CATEGORY</label>
+                    <select id="shortcutCategory" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-100">
+                        <option value="Work">Work</option>
+                        <option value="Social">Social</option>
+                        <option value="Tools">Tools</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Entertainment">Entertainment</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">ICON CLASS OR EMOJI (Optional)</label>
+                    <input type="text" id="shortcutIcon" placeholder="e.g. fa-brands fa-whatsapp YA 💬" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-100" />
+                    <p class="text-[10px] text-slate-400 mt-1">Khaali chhodne par website ka official Favicon automatic lag jayega.</p>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" onclick="closeAddModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-md">
+                        Save Button
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-2xl text-xs font-bold flex items-center space-x-2 transform translate-y-20 opacity-0 transition-all duration-300">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 dark:text-emerald-600 text-sm"></i>
+        <span id="toastMsg">Action completed successfully</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 dark:border-slate-800 py-4 text-center text-xs text-slate-500 dark:text-slate-400">
+        DashPulse Dashboard &copy; Save your URL shortcuts locally & backup anytime.
+    </footer>
+
+    <script>
+        // Pre-loaded useful URLs
+        const DEFAULT_SHORTCUTS = [
+            { id: '1', title: 'Google', url: 'https://www.google.com', category: 'Tools', icon: 'fa-brands fa-google' },
+            { id: '2', title: 'YouTube', url: 'https://www.youtube.com', category: 'Entertainment', icon: 'fa-brands fa-youtube' },
+            { id: '3', title: 'WhatsApp Web', url: 'https://web.whatsapp.com', category: 'Social', icon: 'fa-brands fa-whatsapp' },
+            { id: '4', title: 'Gmail', url: 'https://mail.google.com', category: 'Work', icon: 'fa-solid fa-envelope' },
+            { id: '5', title: 'ChatGPT', url: 'https://chatgpt.com', category: 'Tools', icon: 'fa-solid fa-robot' },
+            { id: '6', title: 'Amazon', url: 'https://www.amazon.in', category: 'Shopping', icon: 'fa-brands fa-amazon' },
+            { id: '7', title: 'Instagram', url: 'https://www.instagram.com', category: 'Social', icon: 'fa-brands fa-instagram' },
+            { id: '8', title: 'GitHub', url: 'https://github.com', category: 'Work', icon: 'fa-brands fa-github' },
+            { id: '9', title: 'Flipkart', url: 'https://www.flipkart.com', category: 'Shopping', icon: '🛍️' },
+            { id: '10', title: 'Twitter / X', url: 'https://x.com', category: 'Social', icon: 'fa-brands fa-x-twitter' },
+            { id: '11', title: 'LinkedIn', url: 'https://www.linkedin.com', category: 'Work', icon: 'fa-brands fa-linkedin' },
+            { id: '12', title: 'Netflix', url: 'https://www.netflix.com', category: 'Entertainment', icon: 'fa-solid fa-film' }
+        ];
+
+        const CATEGORIES = ['All', 'Work', 'Social', 'Tools', 'Shopping', 'Entertainment'];
+        let activeCategory = 'All';
+        let shortcuts = [];
+
+        // DOM elements
+        const shortcutsGrid = document.getElementById('shortcutsGrid');
+        const categoryTabs = document.getElementById('categoryTabs');
+        const shortcutModal = document.getElementById('shortcutModal');
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            initClock();
+            loadShortcuts();
+            renderCategories();
+            renderShortcuts();
+        });
+
+        // Digital Clock & Time-based Greeting
+        function initClock() {
+            const clockEl = document.getElementById('clock');
+            const greetingEl = document.getElementById('greeting');
+            
+            function update() {
+                const now = new Date();
+                clockEl.textContent = now.toLocaleTimeString();
+
+                const hours = now.getHours();
+                let greeting = "Welcome Back! 👋";
+                if (hours < 12) greeting = "Good Morning! ☀️";
+                else if (hours < 18) greeting = "Good Afternoon! 🌤️";
+                else greeting = "Good Evening! 🌙";
+                
+                greetingEl.textContent = greeting;
+            }
+            update();
+            setInterval(update, 1000);
+        }
+
+        // Dark Mode Initialization
+        function initTheme() {
+            const toggleBtn = document.getElementById('themeToggle');
+            const storedTheme = localStorage.getItem('dash_theme');
+
+            if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+
+            toggleBtn.addEventListener('click', () => {
+                const isDark = document.documentElement.classList.toggle('dark');
+                localStorage.setItem('dash_theme', isDark ? 'dark' : 'light');
+            });
+        }
+
+        // Load data from LocalStorage
+        function loadShortcuts() {
+            const stored = localStorage.getItem('dash_shortcuts');
+            if (stored) {
+                try {
+                    shortcuts = JSON.parse(stored);
+                } catch(e) {
+                    shortcuts = [...DEFAULT_SHORTCUTS];
+                }
+            } else {
+                shortcuts = [...DEFAULT_SHORTCUTS];
+                saveToLocalStorage();
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('dash_shortcuts', JSON.stringify(shortcuts));
+        }
+
+        function dismissBanner() {
+            document.getElementById('noticeBanner').style.display = 'none';
+        }
+
+        // Export shortcuts as JSON Backup file
+        function exportBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(shortcuts, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `dashpulse_backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+
+            showToast("Backup file downloaded! Isse safe rakhein.", "success");
+        }
+
+        // Import backup JSON file
+        function importBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        shortcuts = importedData;
+                        saveToLocalStorage();
+                        renderShortcuts();
+                        showToast("Backup successfully restore ho gaya!", "success");
+                    } else {
+                        showToast("Invalid backup file format!", "error");
+                    }
+                } catch(err) {
+                    showToast("File read karne me error aaya!", "error");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // reset file input
+        }
+
+        function resetToDefaults() {
+            if (confirm("Kya aap saare buttons ko default settings par reset karna chahte hain?")) {
+                shortcuts = [...DEFAULT_SHORTCUTS];
+                saveToLocalStorage();
+                renderShortcuts();
+                showToast("Default links reset ho gaye!", "success");
+            }
+        }
+
+        function renderCategories() {
+            categoryTabs.innerHTML = CATEGORIES.map(cat => `
+                <button 
+                    onclick="filterCategory('${cat}')" 
+                    class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+                        activeCategory === cat 
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' 
+                        : 'bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
+                    }">
+                    ${cat}
+                </button>
+            `).join('');
+        }
+
+        function filterCategory(cat) {
+            activeCategory = cat;
+            renderCategories();
+            renderShortcuts();
+        }
+
+        // Render URL Buttons Grid
+        function renderShortcuts() {
+            const filtered = activeCategory === 'All' 
+                ? shortcuts 
+                : shortcuts.filter(s => s.category === activeCategory);
+
+            if (filtered.length === 0) {
+                shortcutsGrid.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-slate-400">
+                        <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
+                        <p class="text-xs font-semibold">Is category me koi button nahi hai.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            shortcutsGrid.innerHTML = filtered.map(s => {
+                let iconHtml = '';
+
+                if (s.icon && s.icon.startsWith('fa-')) {
+                    // FontAwesome class
+                    iconHtml = `<i class="${s.icon} text-2xl text-blue-600 dark:text-blue-400"></i>`;
+                } else if (s.icon && s.icon.trim().length <= 4) {
+                    // Plain Emoji
+                    iconHtml = `<span class="text-2xl">${s.icon}</span>`;
+                } else {
+                    // Default Favicon Loader
+                    iconHtml = `<img src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(s.url)}&sz=64" class="w-7 h-7 rounded" onerror="this.onerror=null; this.src='https://placehold.co/32x32/3b82f6/white?text=LINK';" />`;
+                }
+
+                return `
+                    <div class="shortcut-card group relative bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl p-4 flex flex-col items-center justify-center text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
+                        <!-- Action Edit/Delete Buttons -->
+                        <div class="action-btns opacity-0 transition-opacity absolute top-2 right-2 flex space-x-1 bg-white/90 dark:bg-slate-800/90 rounded-lg p-1 shadow border border-slate-200 dark:border-slate-700">
+                            <button onclick="openEditModal('${s.id}')" class="text-slate-400 hover:text-blue-500 p-1 text-xs" title="Edit">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="deleteShortcut('${s.id}')" class="text-slate-400 hover:text-red-500 p-1 text-xs" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+
+                        <!-- URL Link Button -->
+                        <a href="${s.url}" target="_blank" rel="noopener noreferrer" class="w-full flex flex-col items-center space-y-3">
+                            <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                ${iconHtml}
+                            </div>
+                            <span class="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate max-w-full">
+                                ${escapeHtml(s.title)}
+                            </span>
+                        </a>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Search engine icon handler
+        function updateSearchIcon() {
+            const engine = document.getElementById('searchEngine').value;
+            const icon = document.getElementById('searchEngineIcon');
+            
+            if (engine === 'google') icon.className = 'fa-brands fa-google text-slate-400 mr-2 text-base';
+            else if (engine === 'youtube') icon.className = 'fa-brands fa-youtube text-red-500 mr-2 text-base';
+            else if (engine === 'bing') icon.className = 'fa-brands fa-microsoft text-blue-500 mr-2 text-base';
+            else if (engine === 'duckduckgo') icon.className = 'fa-solid fa-shield-halved text-orange-500 mr-2 text-base';
+        }
+
+        // Handle Search Submit
+        function handleSearch(e) {
+            e.preventDefault();
+            const query = document.getElementById('searchInput').value.trim();
+            const engine = document.getElementById('searchEngine').value;
+
+            if (!query) return;
+
+            // Direct URL Check
+            if (/^(https?:\/\/)?([\w\d-]+\.)+[\w-]+(\/.*)?$/i.test(query)) {
+                const targetUrl = query.startsWith('http') ? query : `https://${query}`;
+                window.open(targetUrl, '_blank');
+                return;
+            }
+
+            let searchUrl = '';
+            switch (engine) {
+                case 'google':
+                    searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+                    break;
+                case 'youtube':
+                    searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+                    break;
+                case 'bing':
+                    searchUrl = `https://www.bing.com/search?q=${encodeURIComponent(query)}`;
+                    break;
+                case 'duckduckgo':
+                    searchUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
+                    break;
+            }
+
+            window.open(searchUrl, '_blank');
+        }
+
+        // Modal Controls
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'Naya Shortcut Button Jodein';
+            document.getElementById('shortcutForm').reset();
+            document.getElementById('shortcutId').value = '';
+            
+            shortcutModal.classList.remove('hidden');
+            setTimeout(() => {
+                shortcutModal.classList.remove('opacity-0');
+                shortcutModal.children[0].classList.remove('scale-95');
+            }, 10);
+        }
+
+        function openEditModal(id) {
+            const target = shortcuts.find(s => s.id === id);
+            if (!target) return;
+
+            document.getElementById('modalTitle').textContent = 'Shortcut Edit Karein';
+            document.getElementById('shortcutId').value = target.id;
+            document.getElementById('shortcutTitle').value = target.title;
+            document.getElementById('shortcutUrl').value = target.url;
+            document.getElementById('shortcutCategory').value = target.category;
+            document.getElementById('shortcutIcon').value = target.icon || '';
+
+            shortcutModal.classList.remove('hidden');
+            setTimeout(() => {
+                shortcutModal.classList.remove('opacity-0');
+                shortcutModal.children[0].classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeAddModal() {
+            shortcutModal.classList.add('opacity-0');
+            shortcutModal.children[0].classList.add('scale-95');
+            setTimeout(() => {
+                shortcutModal.classList.add('hidden');
+            }, 200);
+        }
+
+        function saveShortcut(e) {
+            e.preventDefault();
+            const id = document.getElementById('shortcutId').value;
+            const title = document.getElementById('shortcutTitle').value.trim();
+            const url = document.getElementById('shortcutUrl').value.trim();
+            const category = document.getElementById('shortcutCategory').value;
+            const icon = document.getElementById('shortcutIcon').value.trim();
+
+            if (id) {
+                // Update
+                const index = shortcuts.findIndex(s => s.id === id);
+                if (index !== -1) {
+                    shortcuts[index] = { id, title, url, category, icon };
+                }
+                showToast("Shortcut update ho gaya!", "success");
+            } else {
+                // Create
+                const newShortcut = {
+                    id: Date.now().toString(),
+                    title,
+                    url,
+                    category,
+                    icon
+                };
+                shortcuts.push(newShortcut);
+                showToast("Naya shortcut jud gaya!", "success");
+            }
+
+            saveToLocalStorage();
+            renderShortcuts();
+            closeAddModal();
+        }
+
+        function deleteShortcut(id) {
+            if (confirm("Kya aap is shortcut ko delete karna chahte hain?")) {
+                shortcuts = shortcuts.filter(s => s.id !== id);
+                saveToLocalStorage();
+                renderShortcuts();
+                showToast("Shortcut delete ho gaya!", "error");
+            }
+        }
+
+        function showToast(msg, type = "success") {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.textContent = msg;
+            if (type === "error") {
+                toastIcon.className = "fa-solid fa-circle-xmark text-red-400 dark:text-red-600 text-sm";
+            } else {
+                toastIcon.className = "fa-solid fa-circle-check text-emerald-400 dark:text-emerald-600 text-sm";
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+    </script>
+</body>
+</html>
